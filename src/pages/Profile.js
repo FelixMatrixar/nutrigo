@@ -6,6 +6,7 @@ import { signOut } from "firebase/auth";
 import { addDailyNutritionData } from "../helper/NutriService";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import { ToastContainer, toast } from "react-toastify";
 import { format, addDays, subDays } from "date-fns";
 import {
   FaArrowLeft,
@@ -15,6 +16,9 @@ import {
 } from "react-icons/fa";
 import { RiLogoutCircleRFill as LogoutIcon } from "react-icons/ri";
 import { CgProfile as ProfileIcon } from "react-icons/cg";
+import Macronutrients from "../component/WeeklyMacroNutritionChart";
+import VitaminChart from "../component/WeeklyMicroNutrionChart";
+import NutritionDisplay from "../component/NutritionDisplay";
 
 function Dashboard() {
   const [nutritionData, setNutritionData] = useState(null);
@@ -154,6 +158,21 @@ function Dashboard() {
     }
   };
 
+  const handleButtonClick = () => {
+    toast.success(
+      "WhatsApp linked successfully! Please check your WhatsApp for a message from NutriGo.",
+      {
+        position: "top-center",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+      }
+    );
+  };
+
   if (!isAuthenticated) {
     return <Navigate to="/home" replace />;
   }
@@ -195,9 +214,10 @@ function Dashboard() {
 
           {/* Nutrition Data Cards */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 flex-1">
-            <div className="bg-[#6E0D25] text-white p-4 rounded-md shadow-md flex flex-col justify-center">
+            {/* Macronutrients Summary */}
+            <div className="bg-gradient-to-r from-gray-900 to-gray-800 text-white p-4 rounded-md shadow-md flex flex-col justify-center">
               <p className="font-bold text-2xl font-mono text-start">
-                Today's <br></br> Macronutrients Consumption
+                Today's <br /> Macronutrients Consumption
               </p>
               <p className="text-3xl text-end font-bold">
                 {todayNutritionData
@@ -211,22 +231,28 @@ function Dashboard() {
                   : "No Data"}
               </p>
             </div>
-            <div className="bg-gradient-to-r from-[#FF7F2A] to-[#6E0D25] text-white p-4 rounded-md shadow-md flex flex-col justify-top">
-              <p className="font-bold text-2xl text-end text-mono">calories</p>
+
+            {/* Calories */}
+            <div className="bg-gray-200 text-black p-4 rounded-md shadow-md flex flex-col justify-top">
+              <p className="font-bold text-2xl text-end font-mono">calories</p>
               <p className="text-5xl font-mono font-semibold pt-2">
                 {todayNutritionData
                   ? `${todayNutritionData.calories} kcal`
                   : "0"}
               </p>
             </div>
-            <div className="bg-gradient-to-r from-[#6E0D25] to-[#FF7F2A] text-white p-4 rounded-md shadow-md flex flex-col justify-top">
-              <p className="font-bold text-2xl text-start text-mono">protein</p>
+
+            {/* Protein */}
+            <div className="bg-gray-400 text-black p-4 rounded-md shadow-md flex flex-col justify-top">
+              <p className="font-bold text-2xl text-start font-mono">protein</p>
               <p className="text-5xl font-mono font-semibold pt-2">
                 {todayNutritionData ? `${todayNutritionData.protein} g` : "0"}
               </p>
             </div>
-            <div className="bg-gradient-to-r from-[#FF7F2A] to-[#6E0D25] text-white p-4 rounded-md shadow-md flex flex-col justify-top">
-              <p className="font-bold text-2xl text-start text-mono">fats</p>
+
+            {/* Fats */}
+            <div className="bg-gray-600 text-white p-4 rounded-md shadow-md flex flex-col justify-top">
+              <p className="font-bold text-2xl text-start font-mono">fats</p>
               <p className="text-5xl font-mono font-semibold pt-2">
                 {todayNutritionData ? `${todayNutritionData.fat} g` : "0"}
               </p>
@@ -242,6 +268,7 @@ function Dashboard() {
         )}
 
         <button
+          onClick={handleButtonClick}
           disabled={!isProfileComplete}
           className={`w-full md:w-auto py-2 px-6 rounded-md font-medium flex flex-row justify-center items-center space-x-2 ${
             isProfileComplete
@@ -277,36 +304,28 @@ function Dashboard() {
           />
         </div>
 
-        {/* Nutrition Data Display */}
-        <div className="text-start pt-8 mb-6">
-          {!loadingNutritionData ? (
-            <div>
-              {nutritionData ? (
-                <div>
-                  <p>Calories: {nutritionData.calories}</p>
-                  <p>Protein: {nutritionData.protein} g</p>
-                  <p>Fat: {nutritionData.fat} g</p>
-                  <p>Carbohydrates: {nutritionData.carbohydrates} g</p>
-                  <p>Fiber: {nutritionData.fiber} g</p>
-                  <p>Sugar: {nutritionData.sugar} g</p>
-                </div>
-              ) : (
-                <p className="text-red-500">No data added on this date</p>
-              )}
-            </div>
-          ) : (
-            <p>Loading Data ...</p>
-          )}
-        </div>
-        <div className="flex flex-col md:flex-row md:justify-center md:space-x-4">
+        {/* Nutrition Display Section */}
+        <NutritionDisplay
+          nutritionData={nutritionData}
+          loading={loadingNutritionData}
+        />
+
+        {/* Vitamin Chart Section */}
+        <VitaminChart selectedDate={selectedDate} />
+        {/* Weekly Chart Section */}
+        <Macronutrients selectedDate={selectedDate} />
+
+        {/* <div className="flex flex-col md:flex-row md:justify-center md:space-x-4">
           <button
             onClick={handleAddNutritionData}
             className="w-full md:w-auto py-2 px-6 rounded-md font-medium bg-[#FF7F2A] hover:bg-[#6E0D25] text-white"
           >
             Add Data
           </button>
-        </div>
+        </div> */}
       </div>
+      {/* Toast Container */}
+      <ToastContainer />
     </div>
   );
 }
