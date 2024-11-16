@@ -139,7 +139,7 @@ function Dashboard() {
       calories: 2000,
       protein: 100,
       fat: 70,
-      carbohydrates: 250,
+      carbs: 250,
       fiber: 30,
       sugar: 50,
     });
@@ -197,14 +197,16 @@ function Dashboard() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 flex-1">
             <div className="bg-[#6E0D25] text-white p-4 rounded-md shadow-md flex flex-col justify-center">
               <p className="font-bold text-2xl font-mono text-start">
-                Today's <br></br> Consumption
+                Today's <br></br> Macronutrients Consumption
               </p>
               <p className="text-3xl text-end font-bold">
                 {todayNutritionData
                   ? `${
                       todayNutritionData.calories +
                       todayNutritionData.protein +
-                      todayNutritionData.fat
+                      todayNutritionData.fat +
+                      todayNutritionData.carbs +
+                      todayNutritionData.fiber
                     } g`
                   : "No Data"}
               </p>
