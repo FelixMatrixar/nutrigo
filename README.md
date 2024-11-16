@@ -30,9 +30,10 @@ npm install
 ```
 
 ### 4. Set Up Firebase
-1. The firebase.js file, containing sensitive configuration details, is included in the submission folder provided with this project.
-2. Copy the firebase.js file into the src folder of the project.
-3. Important: *Do not publish or share the firebase.js file as it contains sensitive information.*
+1. The firebase.js file, which contains sensitive configuration details, is not included in the repository.
+2. You must create your own Firebase project. Refer to Firebase Documentation for assistance.
+3. Add the firebase.js file with your Firebase configuration to the src folder. Ensure the file is named firebase.js to maintain code consistency.
+4. Important: Never publish or share the firebase.js file, as it contains sensitive information.
 
 ### 5. Start the Development Server
 Run the following command to start the app:
