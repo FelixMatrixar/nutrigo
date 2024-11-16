@@ -1,24 +1,73 @@
-import logo from './logo.svg';
+import React, { useEffect, useState } from 'react';
 import './App.css';
+import Home from './pages/Home';
+import { auth, provider, db as firestore } from "../src/firebase";
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { setDoc, doc, getDoc } from 'firebase/firestore';
+import Dashboard from './pages/Profile';
+import UserForm from './pages/UserForm';
 
 function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(null);
+  // const [isProfileComplete, setIsProfileComplete] = useState(null);
+  const [initialLoadComplete, setInitialLoadComplete] = useState(false); // Track initial load completion
+
+  useEffect(() => {
+    // Listen to authentication state changes
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+      if (user) {
+        setIsAuthenticated(true);
+
+        // Check profile completeness
+        // const checkProfileCompletion = async () => {
+        //   if (user.phoneNumber) {
+        //     setIsProfileComplete(true);
+        //   } else {
+        //     const userDoc = await getDoc(doc(firestore, "users", user.uid));
+        //     setIsProfileComplete(userDoc.exists() && !!userDoc.data().phoneNumber);
+        //   }
+        // };
+
+        // await checkProfileCompletion();
+        // console.log(isProfileComplete)
+      } else {
+        setIsAuthenticated(false);
+        // setIsProfileComplete(false);
+      }
+
+      // Set initial load as complete after auth and profile checks
+      setInitialLoadComplete(true);
+    });
+
+    return unsubscribe; // Cleanup the listener on component unmount
+  }, []);
+
+  // Display loading spinner or message until initial load is complete
+  if (!initialLoadComplete) {
+    
+    return <div className="flex items-center justify-center h-screen bg-black text-white">
+    <p className="text-xl">Loading...</p>
+  </div>;
+  }
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <Router>
+      <Routes>
+        <Route
+          path="/"
+          element={
+            isAuthenticated ? 
+                <Navigate to="/dashboard" />
+             : 
+              <Home />
+
+          }
+        />
+        <Route path="/user-form" element={<UserForm />} />
+        <Route path="/home" element={<Home />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+      </Routes>
+    </Router>
   );
 }
 
