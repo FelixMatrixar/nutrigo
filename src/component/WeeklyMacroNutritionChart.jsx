@@ -1,129 +1,31 @@
-// import React from "react";
-// import {
-//   Chart as ChartJS,
-//   CategoryScale,
-//   LinearScale,
-//   PointElement,
-//   LineElement,
-//   Title,
-//   Tooltip,
-//   Legend,
-// } from "chart.js";
-// import { Line } from "react-chartjs-2";
-
-// // Register the required components
-// ChartJS.register(
-//   CategoryScale,
-//   LinearScale,
-//   PointElement,
-//   LineElement,
-//   Title,
-//   Tooltip,
-//   Legend
-// );
-
-// const WeeklyNutritionChart = ({ data }) => {
-//   const chartData = {
-//     labels: data.map((entry) => entry.date),
-//     datasets: [
-//       {
-//         label: "Calories",
-//         data: data.map((entry) => entry.calories),
-//         borderColor: "#FF7F2A",
-//         backgroundColor: "rgba(255, 127, 42, 0.2)",
-//         tension: 0.3,
-//         fill: true,
-//       },
-//       {
-//         label: "Protein",
-//         data: data.map((entry) => entry.protein),
-//         borderColor: "#6E0D25",
-//         backgroundColor: "rgba(110, 13, 37, 0.2)",
-//         tension: 0.3,
-//         fill: true,
-//       },
-//       {
-//         label: "Fat",
-//         data: data.map((entry) => entry.fat),
-//         borderColor: "#84A98C",
-//         backgroundColor: "rgba(132, 169, 140, 0.2)",
-//         tension: 0.3,
-//         fill: true,
-//       },
-//       {
-//         label: "Carbs",
-//         data: data.map((entry) => entry.carbs),
-//         borderColor: "#0C4767",
-//         backgroundColor: "rgba(12, 71, 103, 0.2)",
-//         tension: 0.3,
-//         fill: true,
-//       },
-//       {
-//         label: "Fiber",
-//         data: data.map((entry) => entry.fiber),
-//         borderColor: "#2bfe87",
-//         backgroundColor: "rgba(43, 254, 135, 0.2)",
-//         tension: 0.3,
-//         fill: true,
-//       },
-//     ],
-//   };
-
-//   const chartOptions = {
-//     responsive: true,
-//     maintainAspectRatio: false, // Allow flexibility for smaller screens
-//     plugins: {
-//       legend: {
-//         position: "left",
-//         labels: {
-//           font: {
-//             size: 10, // Adjust font size for smaller screens
-//           },
-//         },
-//       },
-//     },
-//     scales: {
-//       x: {
-//         title: {
-//           display: true,
-//           text: "Dates",
-//           font: {
-//             size: 12, // Adjust font size for small screens
-//           },
-//         },
-//         ticks: {
-//           font: {
-//             size: 10, // Smaller tick labels
-//           },
-//         },
-//       },
-//       y: {
-//         title: {
-//           display: true,
-//           text: "Grams (g)",
-//           font: {
-//             size: 12, // Adjust font size for small screens
-//           },
-//         },
-//         ticks: {
-//           font: {
-//             size: 10, // Smaller tick labels
-//           },
-//         },
-//       },
-//     },
-//   };
-
-//   return <Line data={chartData} options={chartOptions} />;
-// };
-
-// export default WeeklyNutritionChart;
-
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Line } from "react-chartjs-2";
 import { format, subDays } from "date-fns";
 import { auth, db as firestore } from "../firebase";
 import { doc, getDoc } from "firebase/firestore";
+import {
+  Chart as ChartJS,
+  LineElement,
+  PointElement,
+  LinearScale,
+  CategoryScale,
+  Title,
+  Tooltip,
+  Legend,
+  Filler,
+} from "chart.js";
+
+// Register components
+ChartJS.register(
+  LineElement,
+  PointElement,
+  LinearScale,
+  CategoryScale,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+);
 
 const macronutrients = [
   { key: "calories", label: "Calories (kcal)" },
@@ -138,11 +40,13 @@ const MacronutrientChart = ({ selectedDate }) => {
     macronutrients[0].key
   );
   const [weeklyData, setWeeklyData] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  const fetchWeeklyData = async () => {
+  const fetchWeeklyData = useCallback(async () => {
     const user = auth.currentUser;
     if (!user) return;
 
+    setLoading(true); // Start loading
     const promises = [];
     const dates = [];
     for (let i = 6; i >= 0; i--) {
@@ -163,7 +67,7 @@ const MacronutrientChart = ({ selectedDate }) => {
           const docData = docSnap.data();
           return {
             date: dates[index],
-            value: docData[selectedMacronutrient] || 0, // Fetch selected macronutrient
+            value: docData[selectedMacronutrient] || 0,
           };
         } else {
           return {
@@ -176,12 +80,14 @@ const MacronutrientChart = ({ selectedDate }) => {
       setWeeklyData(data);
     } catch (error) {
       console.error("Error fetching weekly data:", error);
+    } finally {
+      setLoading(false); // Stop loading
     }
-  };
+  }, [selectedDate, selectedMacronutrient]);
 
   useEffect(() => {
     fetchWeeklyData();
-  }, [selectedMacronutrient, selectedDate]);
+  }, [fetchWeeklyData]);
 
   const chartData = {
     labels: weeklyData.map((entry) => entry.date),
@@ -204,6 +110,11 @@ const MacronutrientChart = ({ selectedDate }) => {
     plugins: {
       legend: {
         position: "top",
+        labels: {
+          font: {
+            size: window.innerWidth < 768 ? 10 : 12, // Responsive legend font size
+          },
+        },
       },
     },
     scales: {
@@ -219,6 +130,9 @@ const MacronutrientChart = ({ selectedDate }) => {
           text: macronutrients.find((n) => n.key === selectedMacronutrient)
             ?.label,
         },
+        ticks: {
+          beginAtZero: true, // Ensure y-axis starts at zero
+        },
       },
     },
   };
@@ -228,6 +142,7 @@ const MacronutrientChart = ({ selectedDate }) => {
       <h2 className="text-xl md:text-4xl font-bold mb-4 font-mono text-center">
         Weekly Macro-Nutrient Data
       </h2>
+
       <select
         value={selectedMacronutrient}
         onChange={(e) => setSelectedMacronutrient(e.target.value)}
@@ -240,9 +155,13 @@ const MacronutrientChart = ({ selectedDate }) => {
         ))}
       </select>
 
-      <div className="w-full h-64">
-        <Line data={chartData} options={chartOptions} />
-      </div>
+      {loading ? (
+        <p className="text-center text-gray-500">Loading data...</p>
+      ) : (
+        <div className="w-full h-64">
+          <Line data={chartData} options={chartOptions} />
+        </div>
+      )}
     </div>
   );
 };

@@ -4,6 +4,30 @@ import { format, subDays } from "date-fns";
 import { auth, db as firestore } from "../firebase";
 import { doc, getDoc } from "firebase/firestore";
 
+import {
+  Chart as ChartJS,
+  LineElement,
+  PointElement,
+  LinearScale,
+  CategoryScale,
+  Title,
+  Tooltip,
+  Legend,
+  Filler,
+} from "chart.js";
+
+// Register components
+ChartJS.register(
+  LineElement,
+  PointElement,
+  LinearScale,
+  CategoryScale,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+);
+
 const nutrients = [
   { key: "vitaminA", label: "Vitamin A (AKG)" },
   { key: "vitaminB1", label: "Vitamin B1 (AKG)" },
@@ -22,11 +46,13 @@ const nutrients = [
 const VitaminChart = ({ selectedDate }) => {
   const [selectedNutrient, setSelectedNutrient] = useState(nutrients[0].key);
   const [weeklyData, setWeeklyData] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   const fetchWeeklyData = async () => {
     const user = auth.currentUser;
     if (!user) return;
 
+    setLoading(true); // Start loading state
     const promises = [];
     const dates = [];
     for (let i = 6; i >= 0; i--) {
@@ -60,6 +86,8 @@ const VitaminChart = ({ selectedDate }) => {
       setWeeklyData(data);
     } catch (error) {
       console.error("Error fetching weekly data:", error);
+    } finally {
+      setLoading(false); // End loading state
     }
   };
 
@@ -100,7 +128,11 @@ const VitaminChart = ({ selectedDate }) => {
       y: {
         title: {
           display: true,
-          text: "Value",
+          text: nutrients.find((nutrient) => nutrient.key === selectedNutrient)
+            ?.label,
+        },
+        ticks: {
+          beginAtZero: true, // Ensure y-axis starts at zero
         },
       },
     },
@@ -111,6 +143,7 @@ const VitaminChart = ({ selectedDate }) => {
       <h2 className="text-xl md:text-4xl font-bold mb-4 font-mono text-center">
         Weekly Micro-Nutrient Data
       </h2>
+
       {/* Dropdown for Nutrient Selection */}
       <select
         value={selectedNutrient}
@@ -124,10 +157,18 @@ const VitaminChart = ({ selectedDate }) => {
         ))}
       </select>
 
-      {/* Line Chart */}
-      <div className="w-full h-64">
-        <Line data={chartData} options={chartOptions} />
-      </div>
+      {/* Loading Indicator or Chart */}
+      {loading ? (
+        <p className="text-center text-gray-500">Loading data...</p>
+      ) : weeklyData.length > 0 ? (
+        <div className="w-full h-64">
+          <Line data={chartData} options={chartOptions} />
+        </div>
+      ) : (
+        <p className="text-center text-red-500">
+          No data available for this week.
+        </p>
+      )}
     </div>
   );
 };
