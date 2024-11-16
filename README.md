@@ -40,5 +40,8 @@ Run the following command to start the app:
 npm start
 ```
 
+### 6. Access the Application
+Open your browser and navigate to http://localhost:3000.
+
 
 
